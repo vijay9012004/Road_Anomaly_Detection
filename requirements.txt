@@ -5,6 +5,5 @@ numpy
 keras
 tensorflow
 gdown
-requests
 av
-streamlit-components
+requests
