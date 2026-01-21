@@ -1,9 +1,11 @@
 streamlit
 streamlit-webrtc
-opencv-python-headless
+opencv-python
 numpy
-requests
-tensorflow
 keras
+tensorflow
 gdown
-matplotlib
+requests
+av
+streamlit-components
+playsound
