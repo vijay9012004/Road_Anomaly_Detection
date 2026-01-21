@@ -1,6 +1,10 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
-import cv2, os, av, requests
+import os
+import requests
+import cv2  # should be headless
+import av
+
 import numpy as np
 from keras.models import load_model
 import gdown
