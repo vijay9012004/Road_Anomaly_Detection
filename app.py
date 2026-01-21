@@ -1,25 +1,21 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
+import cv2
 import os
-import requests
-import cv2  # should be headless
 import av
-
 import numpy as np
 from keras.models import load_model
 import gdown
+import requests
 import streamlit.components.v1 as components
 
 # ===================== PAGE CONFIG =====================
 st.set_page_config(page_title="🚦 Road Anomaly Detection", layout="wide")
 
 # ===================== SESSION INIT =====================
-if "page" not in st.session_state:
-    st.session_state.page = "welcome"
-if "rule_index" not in st.session_state:
-    st.session_state.rule_index = 0
-if "alert" not in st.session_state:
-    st.session_state.alert = False
+for key, val in {"page": "welcome", "rule_index": 0, "alert": False}.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
 
 # ===================== MODEL LOAD =====================
 MODEL_FILE = "road_anomaly_model.h5"
@@ -71,7 +67,7 @@ class AnomalyProcessor(VideoProcessorBase):
 # ===================== WEATHER FUNCTION =====================
 def get_weather():
     try:
-        latitude, longitude = 13.0827, 80.2707  # Chennai
+        latitude, longitude = 13.0827, 80.2707  # Example coordinates (Chennai)
         url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
         data = requests.get(url, timeout=5).json()
         return data.get("current_weather", None)
@@ -91,7 +87,7 @@ if st.session_state.page == "welcome":
     st.markdown("<p style='text-align:center;'>Drive safe, arrive happy</p>", unsafe_allow_html=True)
     if st.button("➡️ Continue"):
         st.session_state.page = "safety"
-        st.experimental_rerun()
+        st.rerun()
 
 # ===================== SAFETY TIPS =====================
 elif st.session_state.page == "safety":
@@ -103,21 +99,14 @@ elif st.session_state.page == "safety":
         "❤️ Safety matters more than reaching early. Drive calmly."
     ]
     st.markdown(f"<div class='card'><h3>{rules[st.session_state.rule_index]}</h3></div>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("⬅️ Previous") and st.session_state.rule_index > 0:
-            st.session_state.rule_index -= 1
-            st.experimental_rerun()
-    with col2:
-        if st.session_state.rule_index < len(rules)-1:
-            if st.button("Next ➡️"):
-                st.session_state.rule_index += 1
-                st.experimental_rerun()
-        else:
-            if st.button("🚗 Start Journey"):
-                st.session_state.page = "main"
-                st.experimental_rerun()
+    if st.session_state.rule_index < len(rules)-1:
+        if st.button("Next ➡️"):
+            st.session_state.rule_index += 1
+            st.rerun()
+    else:
+        if st.button("🚗 Start Journey"):
+            st.session_state.page = "main"
+            st.rerun()
 
 # ===================== MAIN DASHBOARD =====================
 elif st.session_state.page == "main":
