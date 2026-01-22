@@ -73,11 +73,11 @@ class AnomalyProcessor(VideoProcessorBase):
         cv2.putText(img, f"EMERGENCY: {self.current_result['emergency']}", (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-# ===================== UI TABS =====================
-tab1, tab2, tab3 = st.tabs(["Live Webcam", "Upload Video", "Upload Image"])
+# ===================== VERTICAL NAVIGATION =====================
+choice = st.sidebar.radio("Select Mode", ["Live Webcam", "Upload Video", "Upload Image"])
 
-# ===================== TAB 1: LIVE WEBCAM =====================
-with tab1:
+# ===================== LIVE WEBCAM =====================
+if choice == "Live Webcam":
     st.subheader("Live Road Anomaly Detection")
     processor = webrtc_streamer(
         key="road-anomaly",
@@ -97,8 +97,8 @@ with tab1:
         else:
             st.success("✅ Normal Condition")
 
-# ===================== TAB 2: VIDEO UPLOAD =====================
-with tab2:
+# ===================== VIDEO UPLOAD =====================
+elif choice == "Upload Video":
     st.subheader("Video Upload Analysis")
     video_file = st.file_uploader("Upload a video", type=["mp4", "avi", "mov"])
 
@@ -135,8 +135,8 @@ with tab2:
             else:
                 st.success("✅ No Critical Anomaly Detected in Video")
 
-# ===================== TAB 3: IMAGE UPLOAD =====================
-with tab3:
+# ===================== IMAGE UPLOAD =====================
+elif choice == "Upload Image":
     st.subheader("Image Upload Analysis")
     image_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
