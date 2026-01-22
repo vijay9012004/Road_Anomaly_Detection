@@ -84,15 +84,15 @@ with tab1:
         video_processor_factory=AnomalyProcessor,
         rtc_configuration=RTC_CONFIG,
         media_stream_constraints={"video": True, "audio": False},
-        async_processing=True,
+        async_processing=False,
     )
 
-    # Display live emergency status
     if processor and processor.video_processor:
+        result = processor.video_processor.current_result
         st.write("**Live Prediction Status**")
-        st.write("Prediction:", processor.video_processor.current_result.get("class", ""))
-        st.write("Confidence:", f"{processor.video_processor.current_result.get('confidence', 0)*100:.1f}%")
-        if processor.video_processor.current_result.get("emergency", 0):
+        st.write("Prediction:", result.get("class", ""))
+        st.write("Confidence:", f"{result.get('confidence', 0)*100:.1f}%")
+        if result.get("emergency", 0):
             st.error("🚨 EMERGENCY DETECTED")
         else:
             st.success("✅ Normal Condition")
@@ -117,7 +117,6 @@ with tab2:
                     break
 
                 result = predict_anomaly(frame)
-
                 label = f"{result['class']} ({result['confidence']*100:.1f}%)"
                 color = (0, 0, 255) if result["emergency"] else (0, 255, 0)
 
@@ -130,7 +129,7 @@ with tab2:
                     emergency_triggered = True
 
             cap.release()
-            # Display final emergency status
+
             if emergency_triggered:
                 st.error("🚨 EMERGENCY DETECTED in Video")
             else:
