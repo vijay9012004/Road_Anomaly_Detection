@@ -1,12 +1,7 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
-import cv2
-import os
-import av
-import numpy as np
+import cv2, os, av, numpy as np, tempfile, gdown
 from keras.models import load_model
-import gdown
-import tempfile
 
 # ===================== PAGE CONFIG =====================
 st.set_page_config(page_title="Road Anomaly Detection", layout="wide")
@@ -38,7 +33,7 @@ def preprocess_image(img):
     img = img.astype("float32") / 255.0
     return np.expand_dims(img, axis=0)
 
-# ===================== PREDICTION FUNCTION =====================
+# ===================== PREDICTION =====================
 def predict_anomaly(img):
     inp = preprocess_image(img)
     preds = model.predict(inp, verbose=0)
@@ -50,7 +45,7 @@ def predict_anomaly(img):
 # ===================== RTC CONFIG =====================
 RTC_CONFIG = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
 
-# ===================== VIDEO PROCESSOR (LIVE WEBCAM) =====================
+# ===================== VIDEO PROCESSOR =====================
 class AnomalyProcessor(VideoProcessorBase):
     def __init__(self):
         self.anomaly_count = 0
@@ -73,11 +68,25 @@ class AnomalyProcessor(VideoProcessorBase):
         cv2.putText(img, f"EMERGENCY: {self.current_result['emergency']}", (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-# ===================== VERTICAL NAVIGATION =====================
-choice = st.sidebar.radio("Select Mode", ["Live Webcam", "Upload Video", "Upload Image"])
+# ===================== SIDEBAR VERTICAL NAVIGATION =====================
+st.sidebar.image("https://img.icons8.com/ios-filled/50/000000/car.png", width=50)  # small car icon/logo
+st.sidebar.title("Road Anomaly Detector")
+
+menu = ["Live Webcam", "Upload Video", "Upload Image", "About"]
+choice = st.sidebar.radio("Select Mode", menu)
+
+# ===================== ABOUT SECTION =====================
+if choice == "About":
+    st.subheader("About This Project")
+    st.markdown("""
+    **Project Name:** Road Anomaly Detector  
+    **Developer:** Vijay Rajamani  
+    **College:** Kamarajar Engineering College of Technology  
+    **Description:** Real-time road anomaly detection using Convolutional Neural Networks (CNNs) to identify accidents, fights, fires, or snatching events.
+    """)
 
 # ===================== LIVE WEBCAM =====================
-if choice == "Live Webcam":
+elif choice == "Live Webcam":
     st.subheader("Live Road Anomaly Detection")
     processor = webrtc_streamer(
         key="road-anomaly",
@@ -101,7 +110,6 @@ if choice == "Live Webcam":
 elif choice == "Upload Video":
     st.subheader("Video Upload Analysis")
     video_file = st.file_uploader("Upload a video", type=["mp4", "avi", "mov"])
-
     if video_file is not None:
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(video_file.read())
@@ -115,21 +123,15 @@ elif choice == "Upload Video":
                 ret, frame = cap.read()
                 if not ret:
                     break
-
                 result = predict_anomaly(frame)
                 label = f"{result['class']} ({result['confidence']*100:.1f}%)"
                 color = (0, 0, 255) if result["emergency"] else (0, 255, 0)
-
                 cv2.putText(frame, label, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
                 cv2.putText(frame, f"EMERGENCY: {result['emergency']}", (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-
                 stframe.image(frame, channels="BGR", use_container_width=True)
-
                 if result["emergency"]:
                     emergency_triggered = True
-
             cap.release()
-
             if emergency_triggered:
                 st.error("🚨 EMERGENCY DETECTED in Video")
             else:
@@ -139,12 +141,10 @@ elif choice == "Upload Video":
 elif choice == "Upload Image":
     st.subheader("Image Upload Analysis")
     image_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-
     if image_file is not None:
         file_bytes = np.asarray(bytearray(image_file.read()), dtype=np.uint8)
         img = cv2.imdecode(file_bytes, 1)
         st.image(img, channels="BGR", use_container_width=True)
-
         if st.button("Predict Image"):
             result = predict_anomaly(img)
             st.markdown(f"""
