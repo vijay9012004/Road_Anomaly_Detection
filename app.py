@@ -68,25 +68,28 @@ class AnomalyProcessor(VideoProcessorBase):
         cv2.putText(img, f"EMERGENCY: {self.current_result['emergency']}", (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-# ===================== SIDEBAR VERTICAL NAVIGATION =====================
-st.sidebar.image("https://img.icons8.com/ios-filled/50/000000/car.png", width=50)  # small car icon/logo
+# ===================== SIDEBAR =====================
+st.sidebar.image("https://img.icons8.com/ios-filled/50/000000/car.png", width=50)
 st.sidebar.title("Road Anomaly Detector")
 
-menu = ["Live Webcam", "Upload Video", "Upload Image", "About"]
-choice = st.sidebar.radio("Select Mode", menu)
+# Sidebar buttons with icons
+mode = st.sidebar.radio(
+    "Select Mode",
+    ["Live Webcam", "Upload Video", "Upload Image", "About"]
+)
 
-# ===================== ABOUT SECTION =====================
-if choice == "About":
+# ===================== ABOUT =====================
+if mode == "About":
     st.subheader("About This Project")
     st.markdown("""
     **Project Name:** Road Anomaly Detector  
-    **Developer:** Vijay Rajamani  
+    **Developer:** Vijay Ragavan  
     **College:** Kamarajar Engineering College of Technology  
-    **Description:** Real-time road anomaly detection using Convolutional Neural Networks (CNNs) to identify accidents, fights, fires, or snatching events.
+    **Description:** Real-time road anomaly detection using CNN to detect accidents, fights, fires, or snatching events.
     """)
 
 # ===================== LIVE WEBCAM =====================
-elif choice == "Live Webcam":
+elif mode == "Live Webcam":
     st.subheader("Live Road Anomaly Detection")
     processor = webrtc_streamer(
         key="road-anomaly",
@@ -107,9 +110,13 @@ elif choice == "Live Webcam":
             st.success("✅ Normal Condition")
 
 # ===================== VIDEO UPLOAD =====================
-elif choice == "Upload Video":
+elif mode == "Upload Video":
     st.subheader("Video Upload Analysis")
-    video_file = st.file_uploader("Upload a video", type=["mp4", "avi", "mov"])
+    st.markdown("**Instructions:** Upload a video file (MP4, AVI, MOV, MPEG4) for analysis.")
+    video_file = st.file_uploader(
+        "Choose a video file", type=["mp4", "avi", "mov", "mpeg4"], accept_multiple_files=False
+    )
+
     if video_file is not None:
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(video_file.read())
@@ -131,6 +138,7 @@ elif choice == "Upload Video":
                 stframe.image(frame, channels="BGR", use_container_width=True)
                 if result["emergency"]:
                     emergency_triggered = True
+
             cap.release()
             if emergency_triggered:
                 st.error("🚨 EMERGENCY DETECTED in Video")
@@ -138,13 +146,18 @@ elif choice == "Upload Video":
                 st.success("✅ No Critical Anomaly Detected in Video")
 
 # ===================== IMAGE UPLOAD =====================
-elif choice == "Upload Image":
+elif mode == "Upload Image":
     st.subheader("Image Upload Analysis")
-    image_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    st.markdown("**Instructions:** Upload an image file (JPG, JPEG, PNG) for analysis.")
+    image_file = st.file_uploader(
+        "Choose an image file", type=["jpg", "jpeg", "png"], accept_multiple_files=False
+    )
+
     if image_file is not None:
         file_bytes = np.asarray(bytearray(image_file.read()), dtype=np.uint8)
         img = cv2.imdecode(file_bytes, 1)
         st.image(img, channels="BGR", use_container_width=True)
+
         if st.button("Predict Image"):
             result = predict_anomaly(img)
             st.markdown(f"""
